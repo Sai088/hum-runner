@@ -14,6 +14,8 @@ canvas{height:100%;max-height:100vh;aspect-ratio:9/14;max-width:100%;background:
 .card{background:rgba(29,17,71,.92);border:3px solid var(--sun);border-radius:20px;padding:24px;max-width:340px;text-align:center}
 h1{margin:0 0 6px;font-size:38px;letter-spacing:-1px;color:var(--sun)}
 p{margin:8px 0;line-height:1.45}
+.instructions{font-size:16px;line-height:1.4}
+.instructions strong{color:var(--mint)}
 button{margin-top:12px;font:inherit;font-weight:700;font-size:18px;padding:12px 26px;border:0;border-radius:999px;background:var(--hot);color:#fff;cursor:pointer}
 button.alt{background:var(--mint);color:#16103a}
 button:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
@@ -59,7 +61,7 @@ muteButton.addEventListener('click',()=>{muted=!muted;updateMute();if(!muted)ini
 /* ---------- screens ---------- */
 function show(html){card.innerHTML=html;document.getElementById('ui').classList.remove('hide')}
 function hideUI(){document.getElementById('ui').classList.add('hide')}
-function intro(){mode='intro';show(`<h1>Hum Runner</h1><p>Control the ball with your voice. Hum high to climb, hum low to drop, go silent to sink.</p><p>Best: ${best}</p><button id="go">Start and allow mic</button><button class="alt" id="touch">Play without mic</button>`);
+function intro(){mode='intro';show(`<h1>Hum Runner</h1><p class="instructions"><strong>How to play</strong><br>Guide the ball through the gaps and avoid the walls. Hum higher to rise, hum lower to descend, and go silent to sink.<br><br><b>With mic:</b> hum your lowest and highest notes when prompted.<br><b>Without mic:</b> drag or touch to steer.</p><p>Best: ${best}</p><button id="go">Start and allow mic</button><button class="alt" id="touch">Play without mic</button>`);
   document.getElementById('go').onclick=startMic;
   document.getElementById('touch').onclick=()=>{initAudio();useTouch=true;play()}}
 
