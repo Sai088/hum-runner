@@ -34,7 +34,7 @@ h1{margin:0 0 6px;font-size:38px;letter-spacing:-1px;color:var(--sun)}
 p{margin:8px 0;line-height:1.45}
 .instructions{font-size:16px;line-height:1.4}
 .instructions strong{color:var(--mint)}
-.privacy{font-size:12px;line-height:1.35;color:rgba(255,244,224,.8)}
+.small{font-size:13px;opacity:.75}
 button{margin-top:12px;font:inherit;font-weight:700;font-size:18px;padding:12px 26px;border:0;border-radius:999px;background:var(--hot);color:#fff;cursor:pointer}
 button.alt{background:var(--mint);color:#16103a}
 button:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
@@ -56,20 +56,12 @@ button:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
 <script>
 const cv=document.getElementById('c'),ctx=cv.getContext('2d'),card=document.getElementById('card');
 const W=360,H=560,BX=90,R=14,TOP=40,BOT=H-40;
-// Set this to the registered site hostname to enable Plausible analytics.
-const PLAUSIBLE_DOMAIN='';
 let audio,analyser,buf,mode='intro',useTouch=false,muted=false;
 let lo=48,hi=72,curMidi=null,rms=0,touchY=H/2,pitchHistory=[],lastFrameMidi=null;
 let by=H/2,walls=[],score=0,speed=140,lastGapY=H/2,lastT=0,best=+(localStorage.getItem('hrBest')||0);
 const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const noteName=m=>NOTES[Math.round(m)%12]+(Math.floor(Math.round(m)/12)-1);
 const muteButton=document.getElementById('mute'),pauseButton=document.getElementById('pause');
-if(PLAUSIBLE_DOMAIN){
-  window.plausible=window.plausible||function(){(window.plausible.q=window.plausible.q||[]).push(arguments)};
-  const analytics=document.createElement('script');analytics.defer=true;analytics.src='https://plausible.io/js/script.js';
-  analytics.dataset.domain=PLAUSIBLE_DOMAIN;document.head.appendChild(analytics);
-}
-function track(event,props={}){if(PLAUSIBLE_DOMAIN)window.plausible(event,{props})}
 function initAudio(){
   if(!audio){const AudioCtx=window.AudioContext||window.webkitAudioContext;if(AudioCtx)audio=new AudioCtx()}
   if(audio&&audio.state==='suspended')audio.resume().catch(()=>{});
@@ -88,9 +80,9 @@ muteButton.addEventListener('click',()=>{muted=!muted;updateMute();if(!muted)ini
 /* ---------- screens ---------- */
 function show(html){card.innerHTML=html;document.getElementById('ui').classList.remove('hide')}
 function hideUI(){document.getElementById('ui').classList.add('hide')}
-function intro(){mode='intro';show(`<h1>Hum Runner</h1><p class="instructions"><strong>How to play</strong><br>Guide the ball through the gaps and avoid the walls. Hum higher to rise, hum lower to descend, and go silent to sink.<br><br><b>With mic:</b> hum your lowest and highest notes when prompted.<br><b>Without mic:</b> drag or touch to steer.</p><p>Best: ${best}</p><p class="privacy">Your voice is processed on your device and never recorded or uploaded.</p><button id="go">Start and allow mic</button><button class="alt" id="touch">Play without mic</button>`);
-  document.getElementById('go').onclick=()=>{track('Start Game',{mode:'microphone'});startMic()};
-  document.getElementById('touch').onclick=()=>{track('Start Game',{mode:'touch'});initAudio();useTouch=true;play()}}
+function intro(){mode='intro';show(`<h1>Hum Runner</h1><p class="instructions"><strong>How to play</strong><br>Guide the ball through the gaps and avoid the walls. Hum higher to rise, hum lower to descend, and go silent to sink.<br><br><b>With mic:</b> hum your lowest and highest notes when prompted.<br><b>Without mic:</b> drag or touch to steer.</p><p>Best: ${best}</p><p class="small">🔒 Your voice is processed on your device only. Nothing is recorded or uploaded.</p><button id="go">Start and allow mic</button><button class="alt" id="touch">Play without mic</button>`);
+  document.getElementById('go').onclick=startMic;
+  document.getElementById('touch').onclick=()=>{initAudio();useTouch=true;play()}}
 
 async function startMic(){
   let stream;
@@ -105,7 +97,6 @@ async function startMic(){
     calibrate();
   }catch(e){
     if(stream)stream.getTracks().forEach(track=>track.stop());
-    track('Microphone Unavailable');
     const detail=e&&e.name==='NotAllowedError'?'Microphone permission was denied. Allow it in browser settings and try again.':'Could not start the microphone. Check browser permission and use HTTPS or localhost.';
     show(`<h1>Mic unavailable</h1><p>${detail}</p><p>You can still play without a microphone.</p><button id="r">Try again</button><button class="alt" id="t">Play without mic</button>`);
     document.getElementById('r').onclick=startMic;
@@ -234,7 +225,6 @@ function draw(){
 function title(s){return s<3?'Shy Hummer':s<8?'Bathroom Singer':s<15?'Choir Kid':s<25?'Pitch Wizard':'Vocal Legend'}
 function over(){
   mode='over';
-  track('Game Over',{score:String(score),mode:useTouch?'touch':'microphone'});
   pauseButton.classList.add('hide');sound(115,.32,'triangle',.09);
   if(score>best){best=score;try{localStorage.setItem('hrBest',best)}catch(e){}}
   const t=title(score);
@@ -253,6 +243,17 @@ window.addEventListener('blur',pauseGame);
 cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();touchY=(e.clientY-r.top)/r.height*H});
 cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect();touchY=(e.clientY-r.top)/r.height*H});
 intro();
+</script>
+<script>
+// Paste the token from Cloudflare Web Analytics here to enable page-view analytics.
+const CLOUDFLARE_ANALYTICS_TOKEN='';
+if(CLOUDFLARE_ANALYTICS_TOKEN){
+  const beacon=document.createElement('script');
+  beacon.defer=true;
+  beacon.src='https://static.cloudflareinsights.com/beacon.min.js';
+  beacon.dataset.cfBeacon=JSON.stringify({token:CLOUDFLARE_ANALYTICS_TOKEN});
+  document.body.appendChild(beacon);
+}
 </script>
 </body>
 </html>

@@ -23,14 +23,14 @@ The web app manifest and PNG icons provide install metadata for supported browse
 
 ## Analytics (optional)
 
-Plausible analytics is included as an opt-in integration and is disabled by default. To enable it, set `PLAUSIBLE_DOMAIN` near the top of the game script in `index.html` to the registered hostname in your Plausible site settings, then deploy. It reports page views plus start-mode, microphone-unavailable, and game-over events. It does not access or send microphone audio. If analytics is enabled, update the privacy notice/policy as appropriate for your hosting and legal requirements.
+Cloudflare Web Analytics is wired in as an opt-in page-view beacon and is disabled until configured. In Cloudflare, open **Web Analytics → Add a site**, add the deployed hostname, and copy the token from the manual snippet. Set `CLOUDFLARE_ANALYTICS_TOKEN` near the end of `index.html` to that token, then deploy. Cloudflare's beacon measures site visits and does not access or send microphone audio; it does not report gameplay events or scores.
 
 ## Production checklist
 
 - Deploy over HTTPS and confirm microphone permission and touch fallback on real phones.
 - Verify the social preview from the live URL after setting the absolute `og:image` address.
 - Confirm the manifest and icon load at the deployed paths and test Add to Home Screen on target devices.
-- Enable analytics only after setting a real, registered site domain.
+- Enable analytics only after configuring the Cloudflare-issued token for the deployed hostname.
 - Test the live game in Chrome, Safari on iPhone, Firefox, and Samsung Internet, including mic denial, silence/noise, and tab switching.
 
 ## Browser notes
