@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Why Your Voice Game Jumps Octaves | Hum Runner</title>
+  <meta name="description" content="Learn why voice pitch trackers can jump by an octave and try practical steps for clearer, steadier control in Hum Runner.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A4%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-row">
+      <a class="logo" href="/" aria-label="Hum Runner home">🎤 Hum Runner</a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="../how-to-play.html">How to play</a>
+        <a href="../faq.html">FAQ</a>
+        <a href="../about.html">About</a>
+        <a href="./" aria-current="page">Blog</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article>
+      <h1>Why Your Voice Game Keeps Jumping Octaves—and How to Fix It</h1>
+      <p>A voice game can seem to change your note suddenly even when you feel you are holding one steady hum. That leap is often an octave error: the pitch detector has selected a sound related to your note rather than the note’s fundamental frequency. The result can feel like the ball has suddenly been launched up or down. It is a common limitation of pitch estimation, not a sign that your voice has actually jumped an octave.</p>
+
+      <h2>A note is more than one frequency</h2>
+      <p>A voiced sound contains a fundamental frequency, which we hear as its main pitch, along with quieter components called harmonics. These harmonics occur at multiples of the fundamental. For example, a tone at 150 cycles per second can also contain energy at 300 and 450 cycles per second. The ear usually groups those components into one note, but a computer has to infer which one is the fundamental.</p>
+      <p>If the fundamental is weak, noisy, or interrupted, a detector may choose the second harmonic instead. That estimate is twice the frequency, which sounds one octave higher. Some methods can instead select a lower subharmonic and report an octave below. The voice itself may have stayed fairly steady; the estimate has changed.</p>
+
+      <h2>Try these checks first</h2>
+      <ol>
+        <li><strong>Make a clear, comfortable hum.</strong> Try a gentle “mmm” or rounded “ooo” on one note. A steady voiced tone is easier to analyze than a whisper, which has little periodic pitch.</li>
+        <li><strong>Reduce competing sound.</strong> Move away from a fan, music, conversation, or traffic if possible. Background noise can hide the repeating pattern the detector needs.</li>
+        <li><strong>Keep a comfortable distance.</strong> Put the phone about 15–20 cm (6–8 in) away and aim its microphone toward you. Do not press it against your mouth or shout into it.</li>
+        <li><strong>Recalibrate patiently.</strong> Hold each low and high note through the full prompt. Pick notes you can sustain easily, and use a slightly wider range if both calibration notes were almost the same pitch.</li>
+      </ol>
+
+      <h2>Move gradually and observe</h2>
+      <p>When the game is responding again, try gliding between notes rather than making a sudden jump from your lowest hum to your highest. This makes it easier to tell whether the control is following your voice. The game may also smooth readings across nearby frames and ignore some implausibly large changes, but filtering cannot make every recording perfect. Microphone hardware, room acoustics, and the character of each person’s voice all affect the signal.</p>
+      <p>If the ball keeps rising while you hold still, pause and start a fresh calibration in a quieter spot. If the mic remains difficult to use, touch controls provide another way to play. You can find the game’s calibration steps in the <a href="../how-to-play.html">How to Play guide</a>.</p>
+
+      <h2>Make one change at a time</h2>
+      <p>When testing a fix, change just one thing before calibrating again. First try moving to a quieter room while keeping the phone in the same position. If the result is still unstable, try a clearer “mmm” tone, then adjust the distance a little. Making one change at a time helps you learn whether the room, microphone placement, or hum made the biggest difference.</p>
+
+      <h2>When a jump is not a problem</h2>
+      <p>Voice pitch naturally moves a little as you hum, and the game translates detected pitch into position rather than judging singing quality. You do not need perfect pitch or a musical voice. A relaxed, repeatable hum is usually more useful than trying to force an exact note. Stop if your throat feels uncomfortable, and take a break rather than pushing for a wider range.</p>
+      <p>Pitch tracking is an estimate made from a real-world microphone signal, so occasional mistakes are expected. A calm room, a clear hum, and steady calibration give the game better input—and usually make the controls feel more predictable.</p>
+    </article>
+
+    <p><a href="./">← Back to blog</a></p>
+    <a class="button" href="/">Play Hum Runner</a>
+  </main>
+
+  <footer class="site-footer">
+    <nav class="footer-nav" aria-label="Footer navigation">
+      <a href="../about.html">About</a>
+      <a href="../how-to-play.html">How to play</a>
+      <a href="../faq.html">FAQ</a>
+      <a href="../privacy.html">Privacy Policy</a>
+      <a href="../contact.html">Contact</a>
+      <a href="./">Blog</a>
+    </nav>
+    <p>© 2026 Hum Runner</p>
+  </footer>
+  <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "f34d01980d0a4d54a13545ab7c6b1253"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

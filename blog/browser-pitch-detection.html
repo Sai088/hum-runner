@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>How Browser Pitch Detection Works | Hum Runner</title>
+  <meta name="description" content="A plain-language explanation of microphone input, the Web Audio API, autocorrelation, and pitch-estimation errors in browser games.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A4%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-row">
+      <a class="logo" href="/" aria-label="Hum Runner home">🎤 Hum Runner</a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="../how-to-play.html">How to play</a>
+        <a href="../faq.html">FAQ</a>
+        <a href="../about.html">About</a>
+        <a href="./" aria-current="page">Blog</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article>
+      <h1>How Pitch Detection Works in a Browser Game</h1>
+      <p>Hum Runner turns a changing sound into a changing position on screen. The browser does not understand a hum as “move up” by itself: the game asks for microphone input, looks for a repeating pattern, estimates its pitch, and maps that estimate to the ball’s height. Here is the process in everyday terms.</p>
+
+      <h2>From microphone to samples</h2>
+      <p>After a player grants permission, the browser can provide audio from the selected microphone. The Web Audio API gives JavaScript tools to work with that stream. In Hum Runner, an audio source feeds an analyser, which exposes small blocks of time-domain samples: a sequence of numbers describing the sound wave’s changing air pressure.</p>
+      <p>The game does not need to upload a recording to do this calculation. It analyzes the current sample block in the page, estimates a pitch, then uses that number to steer. Permission is requested by the browser, and the player can deny it and use touch controls instead.</p>
+
+      <h2>Finding a repeating cycle</h2>
+      <p>A steady voiced hum creates a wave that repeats. Autocorrelation is one way to look for that repetition. Imagine placing a copy of the sample next to itself, shifting one copy a little at a time, and checking how well their shapes line up. A good match after a particular delay suggests the sound repeats after that many samples.</p>
+      <p>That delay is called a lag. If the audio contains 48,000 samples per second and a repeated pattern is about 320 samples apart, the estimated frequency is roughly 48,000 divided by 320, or 150 cycles per second. The game can convert a frequency to a musical pitch and compare it with the player’s calibrated low and high notes. Higher estimated frequency moves the ball up; lower frequency moves it down.</p>
+
+      <h2>Why the estimate can be wrong</h2>
+      <p>Real sound is messier than a clean diagram. A voice usually contains a fundamental frequency plus harmonics at multiples of it. The wave may line up strongly at more than one lag, so an algorithm can mistake a harmonic for the fundamental and report a pitch an octave too high. Noise, a very quiet hum, a breathy or whispered sound, and changes between frames can make the pattern harder to identify.</p>
+      <p>Microphones also differ. A phone case, distance, room echo, and other apps using the input can alter what reaches the browser. Pitch detection is an estimate, not a perfect measurement of a person’s intended note.</p>
+
+      <h2>Why the game calibrates and smooths</h2>
+      <p>Calibration asks for a low and a high comfortable note so the game can map that player’s range to the screen. It does not expect everyone to hum the same notes. During play, a short median filter can reduce one-frame spikes, and an abrupt-change check can ignore some large jumps. Such safeguards make movement steadier, but they are trade-offs: too much smoothing can feel slow, while rejecting too much can ignore a genuine quick change.</p>
+      <p>For better input, try one steady “mmm” or “ooo,” hold your phone a comfortable distance away, and calibrate somewhere quiet. If pitch control is unreliable, touch play remains available. Read the <a href="../how-to-play.html">calibration tips</a> or <a href="octave-errors.html">troubleshoot octave jumps</a> for more practical steps.</p>
+
+      <h2>A small loop, repeated often</h2>
+      <p>The game repeats this process many times each second: read a sample block, estimate whether it has a clear pitch, translate the pitch into a target height, and draw the next frame. When no clear pitch is detected, the game lets gravity pull the ball down. This simple loop makes a browser game feel responsive, while leaving room for occasional noise and estimation errors.</p>
+    </article>
+
+    <p><a href="./">← Back to blog</a></p>
+    <a class="button" href="/">Play Hum Runner</a>
+  </main>
+
+  <footer class="site-footer">
+    <nav class="footer-nav" aria-label="Footer navigation">
+      <a href="../about.html">About</a>
+      <a href="../how-to-play.html">How to play</a>
+      <a href="../faq.html">FAQ</a>
+      <a href="../privacy.html">Privacy Policy</a>
+      <a href="../contact.html">Contact</a>
+      <a href="./">Blog</a>
+    </nav>
+    <p>© 2026 Hum Runner</p>
+  </footer>
+  <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "f34d01980d0a4d54a13545ab7c6b1253"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
