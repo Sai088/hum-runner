@@ -244,16 +244,6 @@ cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();touchY=
 cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect();touchY=(e.clientY-r.top)/r.height*H});
 intro();
 </script>
-<script>
-// Paste the token from Cloudflare Web Analytics here to enable page-view analytics.
-const CLOUDFLARE_ANALYTICS_TOKEN='';
-if(CLOUDFLARE_ANALYTICS_TOKEN){
-  const beacon=document.createElement('script');
-  beacon.defer=true;
-  beacon.src='https://static.cloudflareinsights.com/beacon.min.js';
-  beacon.dataset.cfBeacon=JSON.stringify({token:CLOUDFLARE_ANALYTICS_TOKEN});
-  document.body.appendChild(beacon);
-}
-</script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "f34d01980d0a4d54a13545ab7c6b1253"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
