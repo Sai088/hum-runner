@@ -17,6 +17,22 @@ No build step or dependencies are required.
 
 The game includes a mute toggle, a microphone level indicator, pause/resume controls, and automatically pauses when the tab loses focus. Your best score is stored in the browser.
 
+## Install and share
+
+The web app manifest and PNG icons provide install metadata for supported browsers, including Apple home-screen support. The Open Graph preview graphic is `og.png` (1200 × 630), referenced at `https://hum-runner.netlify.app/og.png`; social crawlers need the image at that publicly reachable URL.
+
+## Analytics (optional)
+
+Plausible analytics is included as an opt-in integration and is disabled by default. To enable it, set `PLAUSIBLE_DOMAIN` near the top of the game script in `index.html` to the registered hostname in your Plausible site settings, then deploy. It reports page views plus start-mode, microphone-unavailable, and game-over events. It does not access or send microphone audio. If analytics is enabled, update the privacy notice/policy as appropriate for your hosting and legal requirements.
+
+## Production checklist
+
+- Deploy over HTTPS and confirm microphone permission and touch fallback on real phones.
+- Verify the social preview from the live URL after setting the absolute `og:image` address.
+- Confirm the manifest and icon load at the deployed paths and test Add to Home Screen on target devices.
+- Enable analytics only after setting a real, registered site domain.
+- Test the live game in Chrome, Safari on iPhone, Firefox, and Samsung Internet, including mic denial, silence/noise, and tab switching.
+
 ## Browser notes
 
 Use a modern browser with microphone permissions and Web Audio support. If microphone access is denied or unavailable, choose **Play without mic** from the prompt.

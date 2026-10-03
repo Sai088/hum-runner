@@ -4,6 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Hum Runner</title>
+<meta name="description" content="Control the game with your voice. Hum high to climb, hum low to drop.">
+<meta name="theme-color" content="#1d1147">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Hum Runner: play with your voice 🎤">
+<meta property="og:description" content="Hum to fly through the gaps. How far can your voice go?">
+<meta property="og:url" content="https://hum-runner.netlify.app/">
+<meta property="og:image" content="https://hum-runner.netlify.app/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:alt" content="Hum Runner: play with your voice and fly through the gaps.">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎤</text></svg>">
+<link rel="icon" href="./icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="manifest" href="./manifest.json">
 <style>
 :root{--bg:#1d1147;--ink:#fff4e0;--hot:#ff5d73;--sun:#ffd166;--mint:#3ee6b0}
 *{box-sizing:border-box}
@@ -11,11 +29,12 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 #wrap{position:relative;height:100%;display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 canvas{height:100%;max-height:100vh;aspect-ratio:9/14;max-width:100%;background:linear-gradient(#2d1b69,#7a2f7a 70%,#ff8a5b);border-radius:12px}
 #ui{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px}
-.card{background:rgba(29,17,71,.92);border:3px solid var(--sun);border-radius:20px;padding:24px;max-width:340px;text-align:center}
+.card{background:rgba(29,17,71,.92);border:3px solid var(--sun);border-radius:20px;padding:24px;max-width:340px;max-height:calc(100dvh - 24px);overflow-y:auto;text-align:center}
 h1{margin:0 0 6px;font-size:38px;letter-spacing:-1px;color:var(--sun)}
 p{margin:8px 0;line-height:1.45}
 .instructions{font-size:16px;line-height:1.4}
 .instructions strong{color:var(--mint)}
+.privacy{font-size:12px;line-height:1.35;color:rgba(255,244,224,.8)}
 button{margin-top:12px;font:inherit;font-weight:700;font-size:18px;padding:12px 26px;border:0;border-radius:999px;background:var(--hot);color:#fff;cursor:pointer}
 button.alt{background:var(--mint);color:#16103a}
 button:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
@@ -37,12 +56,20 @@ button:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
 <script>
 const cv=document.getElementById('c'),ctx=cv.getContext('2d'),card=document.getElementById('card');
 const W=360,H=560,BX=90,R=14,TOP=40,BOT=H-40;
+// Set this to the registered site hostname to enable Plausible analytics.
+const PLAUSIBLE_DOMAIN='';
 let audio,analyser,buf,mode='intro',useTouch=false,muted=false;
 let lo=48,hi=72,curMidi=null,rms=0,touchY=H/2,pitchHistory=[],lastFrameMidi=null;
 let by=H/2,walls=[],score=0,speed=140,lastGapY=H/2,lastT=0,best=+(localStorage.getItem('hrBest')||0);
 const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const noteName=m=>NOTES[Math.round(m)%12]+(Math.floor(Math.round(m)/12)-1);
 const muteButton=document.getElementById('mute'),pauseButton=document.getElementById('pause');
+if(PLAUSIBLE_DOMAIN){
+  window.plausible=window.plausible||function(){(window.plausible.q=window.plausible.q||[]).push(arguments)};
+  const analytics=document.createElement('script');analytics.defer=true;analytics.src='https://plausible.io/js/script.js';
+  analytics.dataset.domain=PLAUSIBLE_DOMAIN;document.head.appendChild(analytics);
+}
+function track(event,props={}){if(PLAUSIBLE_DOMAIN)window.plausible(event,{props})}
 function initAudio(){
   if(!audio){const AudioCtx=window.AudioContext||window.webkitAudioContext;if(AudioCtx)audio=new AudioCtx()}
   if(audio&&audio.state==='suspended')audio.resume().catch(()=>{});
@@ -61,9 +88,9 @@ muteButton.addEventListener('click',()=>{muted=!muted;updateMute();if(!muted)ini
 /* ---------- screens ---------- */
 function show(html){card.innerHTML=html;document.getElementById('ui').classList.remove('hide')}
 function hideUI(){document.getElementById('ui').classList.add('hide')}
-function intro(){mode='intro';show(`<h1>Hum Runner</h1><p class="instructions"><strong>How to play</strong><br>Guide the ball through the gaps and avoid the walls. Hum higher to rise, hum lower to descend, and go silent to sink.<br><br><b>With mic:</b> hum your lowest and highest notes when prompted.<br><b>Without mic:</b> drag or touch to steer.</p><p>Best: ${best}</p><button id="go">Start and allow mic</button><button class="alt" id="touch">Play without mic</button>`);
-  document.getElementById('go').onclick=startMic;
-  document.getElementById('touch').onclick=()=>{initAudio();useTouch=true;play()}}
+function intro(){mode='intro';show(`<h1>Hum Runner</h1><p class="instructions"><strong>How to play</strong><br>Guide the ball through the gaps and avoid the walls. Hum higher to rise, hum lower to descend, and go silent to sink.<br><br><b>With mic:</b> hum your lowest and highest notes when prompted.<br><b>Without mic:</b> drag or touch to steer.</p><p>Best: ${best}</p><p class="privacy">Your voice is processed on your device and never recorded or uploaded.</p><button id="go">Start and allow mic</button><button class="alt" id="touch">Play without mic</button>`);
+  document.getElementById('go').onclick=()=>{track('Start Game',{mode:'microphone'});startMic()};
+  document.getElementById('touch').onclick=()=>{track('Start Game',{mode:'touch'});initAudio();useTouch=true;play()}}
 
 async function startMic(){
   let stream;
@@ -78,6 +105,7 @@ async function startMic(){
     calibrate();
   }catch(e){
     if(stream)stream.getTracks().forEach(track=>track.stop());
+    track('Microphone Unavailable');
     const detail=e&&e.name==='NotAllowedError'?'Microphone permission was denied. Allow it in browser settings and try again.':'Could not start the microphone. Check browser permission and use HTTPS or localhost.';
     show(`<h1>Mic unavailable</h1><p>${detail}</p><p>You can still play without a microphone.</p><button id="r">Try again</button><button class="alt" id="t">Play without mic</button>`);
     document.getElementById('r').onclick=startMic;
@@ -206,6 +234,7 @@ function draw(){
 function title(s){return s<3?'Shy Hummer':s<8?'Bathroom Singer':s<15?'Choir Kid':s<25?'Pitch Wizard':'Vocal Legend'}
 function over(){
   mode='over';
+  track('Game Over',{score:String(score),mode:useTouch?'touch':'microphone'});
   pauseButton.classList.add('hide');sound(115,.32,'triangle',.09);
   if(score>best){best=score;try{localStorage.setItem('hrBest',best)}catch(e){}}
   const t=title(score);
