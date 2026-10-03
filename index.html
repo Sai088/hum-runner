@@ -19,6 +19,10 @@ button.alt{background:var(--mint);color:#16103a}
 button:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
 .big{font-size:44px;font-weight:800;color:var(--mint)}
 .hide{display:none!important}
+#controls{position:absolute;z-index:2;top:max(12px,env(safe-area-inset-top));right:max(12px,calc((100vw - min(100vw, 100vh * 9 / 14)) / 2 + 12px));display:flex;gap:8px}
+#controls button{margin:0;min-height:44px;padding:9px 14px;font-size:15px;background:rgba(29,17,71,.9);border:2px solid var(--sun);color:var(--ink)}
+#controls button:active{transform:scale(.97)}
+@media(max-width:420px){.card{padding:20px;max-width:min(340px,calc(100vw - 32px))}h1{font-size:32px}#controls{right:10px;top:max(10px,env(safe-area-inset-top))}#controls button{padding:8px 10px;font-size:14px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -26,35 +30,56 @@ button:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
 <div id="wrap">
   <canvas id="c" width="360" height="560"></canvas>
   <div id="ui"><div class="card" id="card"></div></div>
+  <div id="controls"><button id="mute" aria-pressed="false">Sound: on</button><button id="pause" class="hide">Pause</button></div>
 </div>
 <script>
 const cv=document.getElementById('c'),ctx=cv.getContext('2d'),card=document.getElementById('card');
 const W=360,H=560,BX=90,R=14,TOP=40,BOT=H-40;
-let audio,analyser,buf,mode='intro',useTouch=false;
-let lo=48,hi=72,curMidi=null,rms=0,touchY=H/2;
+let audio,analyser,buf,mode='intro',useTouch=false,muted=false;
+let lo=48,hi=72,curMidi=null,rms=0,touchY=H/2,pitchHistory=[],lastFrameMidi=null;
 let by=H/2,walls=[],score=0,speed=140,lastGapY=H/2,lastT=0,best=+(localStorage.getItem('hrBest')||0);
 const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const noteName=m=>NOTES[Math.round(m)%12]+(Math.floor(Math.round(m)/12)-1);
+const muteButton=document.getElementById('mute'),pauseButton=document.getElementById('pause');
+function initAudio(){
+  if(!audio){const AudioCtx=window.AudioContext||window.webkitAudioContext;if(AudioCtx)audio=new AudioCtx()}
+  if(audio&&audio.state==='suspended')audio.resume().catch(()=>{});
+}
+function sound(freq,duration,type='sine',volume=.045){
+  if(muted)return;
+  initAudio();if(!audio)return;
+  const osc=audio.createOscillator(),gain=audio.createGain(),now=audio.currentTime;
+  osc.type=type;osc.frequency.setValueAtTime(freq,now);
+  gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(volume,now+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+  osc.connect(gain);gain.connect(audio.destination);osc.start(now);osc.stop(now+duration+.02);
+}
+function updateMute(){muteButton.textContent=muted?'Sound: off':'Sound: on';muteButton.setAttribute('aria-pressed',String(muted))}
+muteButton.addEventListener('click',()=>{muted=!muted;updateMute();if(!muted)initAudio()});
 
 /* ---------- screens ---------- */
 function show(html){card.innerHTML=html;document.getElementById('ui').classList.remove('hide')}
 function hideUI(){document.getElementById('ui').classList.add('hide')}
 function intro(){mode='intro';show(`<h1>Hum Runner</h1><p>Control the ball with your voice. Hum high to climb, hum low to drop, go silent to sink.</p><p>Best: ${best}</p><button id="go">Start and allow mic</button><button class="alt" id="touch">Play without mic</button>`);
   document.getElementById('go').onclick=startMic;
-  document.getElementById('touch').onclick=()=>{useTouch=true;play()}}
+  document.getElementById('touch').onclick=()=>{initAudio();useTouch=true;play()}}
 
 async function startMic(){
+  let stream;
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    audio=new (window.AudioContext||window.webkitAudioContext)();
+    initAudio();
+    if(!navigator.mediaDevices?.getUserMedia)throw new Error('Microphone access is unavailable.');
+    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    if(!audio)throw new Error('Audio input is unavailable.');
     const src=audio.createMediaStreamSource(stream);
     analyser=audio.createAnalyser();analyser.fftSize=2048;src.connect(analyser);
     buf=new Float32Array(analyser.fftSize);
     calibrate();
   }catch(e){
-    show(`<h1>Mic blocked</h1><p>Allow microphone access in your browser, then try again. The game needs HTTPS or localhost.</p><button id="r">Try again</button><button class="alt" id="t">Play without mic</button>`);
+    if(stream)stream.getTracks().forEach(track=>track.stop());
+    const detail=e&&e.name==='NotAllowedError'?'Microphone permission was denied. Allow it in browser settings and try again.':'Could not start the microphone. Check browser permission and use HTTPS or localhost.';
+    show(`<h1>Mic unavailable</h1><p>${detail}</p><p>You can still play without a microphone.</p><button id="r">Try again</button><button class="alt" id="t">Play without mic</button>`);
     document.getElementById('r').onclick=startMic;
-    document.getElementById('t').onclick=()=>{useTouch=true;play()};
+    document.getElementById('t').onclick=()=>{initAudio();useTouch=true;play()};
   }
 }
 
@@ -69,7 +94,7 @@ function calibrate(){
         samples.sort((a,b)=>a-b);
         if(samples.length<8){show(`<h1>Didn't hear you</h1><p>Hum louder and closer to the mic.</p><button id="a">Try again</button>`);document.getElementById('a').onclick=()=>step(label,key,next);return}
         got[key]=samples[Math.floor(samples.length/2)];next()}},1000);
-    const poll=setInterval(()=>{const m=readPitch();if(m!=null){samples.push(m);document.getElementById('note').textContent=noteName(m)}},50);
+    const poll=setInterval(()=>{const m=detectPitch();if(m!=null){samples.push(m);document.getElementById('note').textContent=noteName(m)}},50);
   };
   step('Hum your lowest note','lo',()=>step('Now hum your highest note','hi',()=>{
     lo=got.lo;hi=got.hi;
@@ -79,7 +104,7 @@ function calibrate(){
 }
 
 /* ---------- pitch detection (autocorrelation) ---------- */
-function readPitch(){
+function detectPitch(){
   analyser.getFloatTimeDomainData(buf);
   let e=0;for(let i=0;i<buf.length;i++)e+=buf[i]*buf[i];
   rms=Math.sqrt(e/buf.length);
@@ -93,12 +118,33 @@ function readPitch(){
   }
   return null;
 }
+function readPitch(){
+  const raw=detectPitch();
+  if(raw==null){pitchHistory.length=0;lastFrameMidi=null;return null}
+  const previous=lastFrameMidi;lastFrameMidi=raw;
+  if(previous!=null&&Math.abs(raw-previous)>7)return null;
+  pitchHistory.push(raw);if(pitchHistory.length>5)pitchHistory.shift();
+  const sorted=[...pitchHistory].sort((a,b)=>a-b);
+  return sorted[Math.floor(sorted.length/2)];
+}
 
 /* ---------- game ---------- */
 function play(){
-  mode='play';score=0;speed=140;walls=[];by=H/2;lastGapY=H/2;
+  mode='play';score=0;speed=140;walls=[];by=H/2;lastGapY=H/2;pitchHistory=[];lastFrameMidi=null;curMidi=null;rms=0;
+  pauseButton.classList.remove('hide');
   for(let i=0;i<3;i++)spawn(W+120+i*220);
   hideUI();lastT=performance.now();requestAnimationFrame(loop);
+}
+function pauseGame(){
+  if(mode!=='play')return;
+  mode='paused';
+  show(`<h1>Paused</h1><p>Take a breath. Your run is safe.</p><button id="resume">Resume</button><button class="alt" id="restart">Restart</button>`);
+  document.getElementById('resume').onclick=resumeGame;
+  document.getElementById('restart').onclick=play;
+}
+function resumeGame(){
+  if(mode!=='paused')return;
+  initAudio();mode='play';hideUI();lastT=performance.now();requestAnimationFrame(loop);
 }
 function spawn(x){
   const gapH=Math.max(120,190-score*3);
@@ -126,7 +172,7 @@ function loop(t){
   speed=Math.min(300,140+score*4);
   for(const w of walls){
     w.x-=speed*dt;
-    if(!w.passed&&w.x+26<BX-R){w.passed=true;score++}
+    if(!w.passed&&w.x+26<BX-R){w.passed=true;score++;sound(880,.12,'sine',.035)}
     if(BX+R>w.x&&BX-R<w.x+26&&(by-R<w.gy-w.gapH/2||by+R>w.gy+w.gapH/2))return over();
   }
   if(walls[0].x<-40){walls.shift();spawn(walls[walls.length-1].x+220)}
@@ -149,21 +195,30 @@ function draw(){
   ctx.lineWidth=3;ctx.strokeStyle='#fff4e0';ctx.stroke();
   ctx.fillStyle='#fff4e0';ctx.font='800 40px Trebuchet MS';ctx.textAlign='center';ctx.fillText(score,W/2,70);
   ctx.font='700 14px Trebuchet MS';ctx.textAlign='left';
-  ctx.fillText(useTouch?'drag to move':(curMidi!=null?noteName(curMidi):'hum!'),12,H-12);
+  ctx.fillText(useTouch?'Drag to move':(curMidi!=null?`${noteName(curMidi)} · hearing`:'Mic · listening'),12,H-18);
+  if(!useTouch){
+    const level=Math.min(1,rms/.08);ctx.fillStyle='rgba(255,244,224,.25)';ctx.fillRect(12,H-12,116,6);
+    ctx.fillStyle=curMidi!=null?'#3ee6b0':'#ffd166';ctx.fillRect(12,H-12,116*level,6);
+  }
 }
 function title(s){return s<3?'Shy Hummer':s<8?'Bathroom Singer':s<15?'Choir Kid':s<25?'Pitch Wizard':'Vocal Legend'}
 function over(){
   mode='over';
+  pauseButton.classList.add('hide');sound(115,.32,'triangle',.09);
   if(score>best){best=score;try{localStorage.setItem('hrBest',best)}catch(e){}}
   const t=title(score);
-  show(`<h1>Game over</h1><div class="big">${score}</div><p>You are a <b>${t}</b>.<br>Best: ${best}</p><button id="a">Play again</button><button class="alt" id="s">Share score</button>`);
+  show(`<h1>Game over</h1><div class="big">${score}</div><p>You are a <b>${t}</b>.<br>Best: ${best}</p><button id="a">Play again</button><button class="alt" id="s">Share score</button><button id="home">Home</button>`);
   document.getElementById('a').onclick=play;
+  document.getElementById('home').onclick=()=>{useTouch=false;pitchHistory=[];lastFrameMidi=null;curMidi=null;intro()};
   document.getElementById('s').onclick=()=>{
     const txt=`I passed ${score} gaps in Hum Runner using only my voice 🎤 ${t}. Can you beat me? ${location.href}`;
     if(navigator.share)navigator.share({text:txt}).catch(()=>{});
     else navigator.clipboard.writeText(txt).then(()=>{document.getElementById('s').textContent='Copied!'});
   };
 }
+pauseButton.addEventListener('click',pauseGame);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseGame()});
+window.addEventListener('blur',pauseGame);
 cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();touchY=(e.clientY-r.top)/r.height*H});
 cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect();touchY=(e.clientY-r.top)/r.height*H});
 intro();
