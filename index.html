@@ -35,6 +35,9 @@ p{margin:8px 0;line-height:1.45}
 .instructions{font-size:16px;line-height:1.4}
 .instructions strong{color:var(--mint)}
 .small{font-size:13px;opacity:.75}
+.card a{color:var(--mint)}
+.start-links{margin-top:14px;font-size:13px;line-height:1.8}
+.start-links a{white-space:nowrap}
 button{margin-top:12px;font:inherit;font-weight:700;font-size:18px;padding:12px 26px;border:0;border-radius:999px;background:var(--hot);color:#fff;cursor:pointer}
 button.alt{background:var(--mint);color:#16103a}
 button:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
@@ -80,7 +83,7 @@ muteButton.addEventListener('click',()=>{muted=!muted;updateMute();if(!muted)ini
 /* ---------- screens ---------- */
 function show(html){card.innerHTML=html;document.getElementById('ui').classList.remove('hide')}
 function hideUI(){document.getElementById('ui').classList.add('hide')}
-function intro(){mode='intro';show(`<h1>Hum Runner</h1><p class="instructions"><strong>How to play</strong><br>Guide the ball through the gaps and avoid the walls. Hum higher to rise, hum lower to descend, and go silent to sink.<br><br><b>With mic:</b> hum your lowest and highest notes when prompted.<br><b>Without mic:</b> drag or touch to steer.</p><p>Best: ${best}</p><p class="small">🔒 Your voice is processed on your device only. Nothing is recorded or uploaded.</p><button id="go">Start and allow mic</button><button class="alt" id="touch">Play without mic</button>`);
+function intro(){mode='intro';show(`<h1>Hum Runner</h1><p class="instructions"><strong>How to play</strong><br>Guide the ball through the gaps and avoid the walls. Hum higher to rise, hum lower to descend, and go silent to sink.<br><br><b>With mic:</b> hum your lowest and highest notes when prompted.<br><b>Without mic:</b> drag or touch to steer.</p><p>Best: ${best}</p><p class="small">🔒 Your voice is processed on your device only. Nothing is recorded or uploaded.</p><button id="go">Start and allow mic</button><button class="alt" id="touch">Play without mic</button><nav class="start-links" aria-label="More about Hum Runner"><a href="how-to-play.html">How to play</a> · <a href="faq.html">FAQ</a> · <a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · <a href="contact.html">Contact</a></nav>`);
   document.getElementById('go').onclick=startMic;
   document.getElementById('touch').onclick=()=>{initAudio();useTouch=true;play()}}
 
